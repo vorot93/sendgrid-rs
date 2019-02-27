@@ -1,10 +1,9 @@
-use std::io::Read;
-
+use futures::{Future, Stream};
+use reqwest::async::Client;
 use reqwest::header::{self, HeaderMap, HeaderValue};
-use reqwest::Client;
 use url::form_urlencoded::Serializer;
 
-use errors::SendgridResult;
+use errors::{SendgridError, SendgridResult};
 use mail::Mail;
 
 static API_URL: &'static str = "https://api.sendgrid.com/api/mail.send.json?";
@@ -74,12 +73,12 @@ impl SGClient {
     /// Sends a messages through the SendGrid API. It takes a Mail struct as an
     /// argument. It returns the string response from the API as JSON.
     /// It sets the Content-Type to be application/x-www-form-urlencoded.
-    pub fn send(&self, mail_info: Mail) -> SendgridResult<String> {
+    pub fn send(&self, mail_info: Mail) -> impl Future<Item = String, Error = SendgridError> {
         let client = Client::new();
         let mut headers = HeaderMap::new();
         headers.insert(
             header::AUTHORIZATION,
-            HeaderValue::from_str(&format!("Bearer {}", self.api_key.clone()))?,
+            HeaderValue::from_str(&format!("Bearer {}", self.api_key.clone())).unwrap(),
         );
         headers.insert(
             header::CONTENT_TYPE,
@@ -87,15 +86,23 @@ impl SGClient {
         );
         headers.insert(header::USER_AGENT, HeaderValue::from_static("sendgrid-rs"));
 
-        let post_body = make_post_body(mail_info)?;
-        let mut res = client
+        let post_body = make_post_body(mail_info).unwrap();
+        client
             .post(API_URL)
             .headers(headers)
             .body(post_body)
-            .send()?;
-        let mut body = String::new();
-        res.read_to_string(&mut body)?;
-        Ok(body)
+            .send()
+            .map_err(|e| SendgridError::from(e))
+            .and_then(|r|
+                r
+                    .into_body()
+                    .concat2()
+                    .map_err(|e| SendgridError::from(e))
+            )
+            .and_then(|c|
+                String::from_utf8(c.to_vec())
+                    .map_err(|e| SendgridError::from(e))
+            )
     }
 }
 

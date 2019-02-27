@@ -15,6 +15,8 @@ pub enum SendgridError {
     InvalidHeader(#[cause] InvalidHeaderValue),
     #[fail(display = "could not UTF-8 decode this filename")]
     InvalidFilename,
+    #[fail(display = "UTF-8 decode error: {}", _0)]
+    UTF8Decode(#[cause] std::string::FromUtf8Error),
 }
 
 impl From<reqwest::Error> for SendgridError {
@@ -38,6 +40,12 @@ impl From<io::Error> for SendgridError {
 impl From<serde_json::Error> for SendgridError {
     fn from(error: serde_json::Error) -> Self {
         SendgridError::JSONDecode(error)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for SendgridError {
+    fn from(error: std::string::FromUtf8Error) -> Self {
+        SendgridError::UTF8Decode(error)
     }
 }
 

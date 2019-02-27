@@ -5,6 +5,7 @@ extern crate failure_derive;
 
 extern crate data_encoding;
 extern crate failure;
+extern crate futures;
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
