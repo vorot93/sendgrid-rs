@@ -1,18 +1,17 @@
 [package]
-name = "sendgrid"
-version = "0.8.0"
-authors = ["Garrett Squire <garrettsquire@gmail.com>"]
-description = "An unofficial client library for the SendGrid API"
-repository = "https://github.com/gsquire/sendgrid-rs"
+name = "sendgrid-futures3"
+version = "0.0.1"
+authors = ["Jasper Bryant-Greene <jbg@rf.net.nz>"]
+description = "An unofficial client library for the SendGrid API (futures3 version)"
+repository = "https://github.com/jbg/sendgrid-rs"
 license = "MIT"
 homepage = "https://sendgrid.com"
 keywords = ["email"]
-documentation = "https://docs.rs/sendgrid"
 readme = "README.md"
 
 [dependencies]
 data-encoding = "2.1"
-futures = "0.1"
+futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 reqwest = { version = "0.9", default-features = false, features = ["rustls-tls", "trust-dns"] }
 serde = "1.0"
 serde_derive = "1.0"

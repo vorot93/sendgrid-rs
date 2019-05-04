@@ -1,4 +1,6 @@
-use futures::{Future, Stream};
+use std::future::Future;
+
+use futures::{compat::{Future01CompatExt, Stream01CompatExt}, future, TryFutureExt, TryStreamExt};
 use reqwest::async::Client;
 use reqwest::header::{self, HeaderMap, HeaderValue};
 use url::form_urlencoded::Serializer;
@@ -73,7 +75,7 @@ impl SGClient {
     /// Sends a messages through the SendGrid API. It takes a Mail struct as an
     /// argument. It returns the string response from the API as JSON.
     /// It sets the Content-Type to be application/x-www-form-urlencoded.
-    pub fn send(&self, mail_info: Mail) -> impl Future<Item = String, Error = SendgridError> {
+    pub fn send(&self, mail_info: Mail) -> impl Future<Output = Result<String, SendgridError>> {
         let client = Client::new();
         let mut headers = HeaderMap::new();
         headers.insert(
@@ -92,16 +94,20 @@ impl SGClient {
             .headers(headers)
             .body(post_body)
             .send()
+            .compat()
             .map_err(|e| SendgridError::from(e))
             .and_then(|r|
                 r
                     .into_body()
-                    .concat2()
+                    .compat()
+                    .try_concat()
                     .map_err(|e| SendgridError::from(e))
             )
             .and_then(|c|
-                String::from_utf8(c.to_vec())
-                    .map_err(|e| SendgridError::from(e))
+                future::ready(
+                    String::from_utf8(c.to_vec())
+                        .map_err(|e| SendgridError::from(e))
+                )
             )
     }
 }
