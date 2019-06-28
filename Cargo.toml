@@ -11,11 +11,10 @@ readme = "README.md"
 
 [dependencies]
 data-encoding = "2.1"
+failure = { version = "0.1.5", default-features = false, features = ["derive"] }
 futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 reqwest = { version = "0.9", default-features = false, features = ["rustls-tls"] }
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 url = "1.7"
-failure = "0.1.2"
-failure_derive = "0.1.2"
