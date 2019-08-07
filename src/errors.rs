@@ -1,32 +1,44 @@
-use std::io;
+use std::{
+    fmt,
+    io,
+};
 
-use reqwest::{self, header::InvalidHeaderValue};
-use serde_json;
+use failure::Fail;
 
-#[derive(Fail, Debug)]
+
+#[derive(Debug)]
 pub enum SendgridError {
-    #[fail(display = "IO Error: {}", _0)]
-    Io(#[cause] io::Error),
-    #[fail(display = "JSON Error: {}", _0)]
-    JSONDecode(#[cause] serde_json::Error),
-    #[fail(display = "HTTP Error: {}", _0)]
-    ReqwestError(#[cause] reqwest::Error),
-    #[fail(display = "Invalid Header Error: {}", _0)]
-    InvalidHeader(#[cause] InvalidHeaderValue),
-    #[fail(display = "could not UTF-8 decode this filename")]
+    Io(io::Error),
+    JSONDecode(serde_json::Error),
+    HttpError(http::Error),
+    HyperError(hyper::Error),
+    InvalidHeader(hyper::header::InvalidHeaderValue),
     InvalidFilename,
-    #[fail(display = "UTF-8 decode error: {}", _0)]
-    UTF8Decode(#[cause] std::string::FromUtf8Error),
+    UTF8Decode(std::string::FromUtf8Error),
 }
 
-impl From<reqwest::Error> for SendgridError {
-    fn from(error: reqwest::Error) -> Self {
-        SendgridError::ReqwestError(error)
+impl fmt::Display for SendgridError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 
-impl From<InvalidHeaderValue> for SendgridError {
-    fn from(error: InvalidHeaderValue) -> Self {
+impl Fail for SendgridError {}
+
+impl From<http::Error> for SendgridError {
+    fn from(error: http::Error) -> Self {
+        SendgridError::HttpError(error)
+    }
+}
+
+impl From<hyper::Error> for SendgridError {
+    fn from(error: hyper::Error) -> Self {
+        SendgridError::HyperError(error)
+    }
+}
+
+impl From<hyper::header::InvalidHeaderValue> for SendgridError {
+    fn from(error: hyper::header::InvalidHeaderValue) -> Self {
         SendgridError::InvalidHeader(error)
     }
 }

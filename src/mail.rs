@@ -3,9 +3,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use serde_json;
+use crate::errors::{SendgridError, SendgridResult};
 
-use errors::{SendgridError, SendgridResult};
 
 macro_rules! add_field {
     // Create a setter that appends.
@@ -132,12 +131,6 @@ impl<'a> Mail<'a> {
     /// Add a custom header for the message. These are usually prefixed with
     /// 'X' or 'x' per the RFC specifications.
     add_field!(add_header <- headers: &'a str);
-
-    /// Used internally for string encoding. Not needed for message building.
-    pub(crate) fn make_header_string(&mut self) -> SendgridResult<String> {
-        let string = serde_json::to_string(&self.headers)?;
-        Ok(string)
-    }
 
     /// Add an X-SMTPAPI string to the message. This can be done by using the
     /// 'rustc_serialize' crate and JSON encoding a map or custom struct. Or

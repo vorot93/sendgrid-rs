@@ -3,13 +3,13 @@
 use std::collections::HashMap;
 
 use data_encoding::BASE64;
-use reqwest::header::{self, HeaderMap, HeaderValue};
-use reqwest::Client;
-use serde_json;
+use futures::compat::Future01CompatExt;
+use hyper::client::connect::Connect;
+use hyper::{Body, header::HeaderValue, Request, Response};
+use serde::Serialize;
 
-pub use reqwest::Response;
+use crate::errors::SendgridResult;
 
-use errors::SendgridResult;
 
 const V3_API_URL: &str = "https://api.sendgrid.com/v3/mail/send";
 
@@ -17,8 +17,9 @@ const V3_API_URL: &str = "https://api.sendgrid.com/v3/mail/send";
 pub type SGMap = HashMap<String, String>;
 
 /// Used to send a V3 message body.
-pub struct Sender {
+pub struct Sender<T: Connect + 'static> {
     api_key: String,
+    client: hyper::Client<T>,
 }
 
 /// The main structure for a V3 API mail send call. This is composed of many other smaller
@@ -106,28 +107,22 @@ pub struct Attachment {
     content_id: Option<String>,
 }
 
-impl Sender {
+impl<T: Connect + 'static> Sender<T> {
     /// Construct a new V3 message sender.
-    pub fn new(api_key: String) -> Sender {
-        Sender { api_key }
+    pub fn new(api_key: String, client: hyper::Client<T>) -> Sender<T> {
+        Sender { api_key, client }
     }
 
     /// Send a V3 message and return the status code or an error from the request.
-    pub fn send(&self, mail: &Message) -> SendgridResult<Response> {
-        let client = Client::new();
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            header::AUTHORIZATION,
-            HeaderValue::from_str(&format!("Bearer {}", self.api_key.clone()))?,
-        );
-        headers.insert(
-            header::CONTENT_TYPE,
-            HeaderValue::from_static("application/json"),
-        );
-        headers.insert(header::USER_AGENT, HeaderValue::from_static("sendgrid-rs"));
-
-        let body = mail.gen_json();
-        let res = client.post(V3_API_URL).headers(headers).body(body).send()?;
+    pub async fn send(&self, mail: &Message) -> SendgridResult<Response<Body>> {
+        let req = Request::builder()
+            .method("POST")
+            .uri(V3_API_URL)
+            .header("authorization", HeaderValue::from_str(&format!("Bearer {}", self.api_key))?)
+            .header("content-type", HeaderValue::from_static("application/json"))
+            .header("user-agent", HeaderValue::from_static("sendgrid-rs"))
+            .body(mail.gen_json().into())?;
+        let res = self.client.request(req).compat().await?;
         Ok(res)
     }
 }

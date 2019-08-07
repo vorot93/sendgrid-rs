@@ -1,19 +1,7 @@
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate failure;
-
-extern crate data_encoding;
-extern crate futures;
-extern crate reqwest;
-extern crate serde;
-extern crate serde_json;
-extern crate url;
+#![feature(async_await)]
 
 pub mod errors;
 mod mail;
-mod sg_client;
 pub mod v3;
 
 pub use mail::{Destination, Mail};
-pub use sg_client::SGClient;
