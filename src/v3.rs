@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 
 use data_encoding::BASE64;
-use futures::compat::Future01CompatExt;
 use hyper::client::connect::Connect;
 use hyper::{Body, header::HeaderValue, Request, Response};
 use serde::Serialize;
@@ -122,7 +121,7 @@ impl<T: Connect + 'static> Sender<T> {
             .header("content-type", HeaderValue::from_static("application/json"))
             .header("user-agent", HeaderValue::from_static("sendgrid-rs"))
             .body(mail.gen_json().into())?;
-        let res = self.client.request(req).compat().await?;
+        let res = self.client.request(req).await?;
         Ok(res)
     }
 }
