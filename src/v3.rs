@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 
 use data_encoding::BASE64;
-use hyper::client::connect::Connect;
-use hyper::{Body, header::HeaderValue, Request, Response};
+use hyper::{Body, client::connect::Connection, header::HeaderValue, Request, Response, service::Service, Uri};
 use serde::Serialize;
+use tokio::io::{AsyncRead, AsyncWrite};
 
 use crate::errors::SendgridResult;
 
@@ -16,9 +16,15 @@ const V3_API_URL: &str = "https://api.sendgrid.com/v3/mail/send";
 pub type SGMap = HashMap<String, String>;
 
 /// Used to send a V3 message body.
-pub struct Sender<T: Connect + 'static> {
+pub struct Sender<S>
+where
+    S: Service<Uri> + Clone + Send + Sync + 'static,
+    S::Response: Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
+{
     api_key: String,
-    client: hyper::Client<T>,
+    client: hyper::Client<S, Body>,
 }
 
 /// The main structure for a V3 API mail send call. This is composed of many other smaller
@@ -106,9 +112,15 @@ pub struct Attachment {
     content_id: Option<String>,
 }
 
-impl<T: Connect + 'static> Sender<T> {
+impl<S> Sender<S>
+where
+    S: Service<Uri> + Clone + Send + Sync + 'static,
+    S::Response: Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
+{
     /// Construct a new V3 message sender.
-    pub fn new(api_key: String, client: hyper::Client<T>) -> Sender<T> {
+    pub fn new(api_key: String, client: hyper::Client<S>) -> Sender<S> {
         Sender { api_key, client }
     }
 
