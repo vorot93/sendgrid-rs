@@ -1,10 +1,9 @@
-extern crate sendgrid;
-
 use std::collections::HashMap;
 
 use sendgrid::v3::*;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut cool_header = HashMap::new();
     cool_header.insert(String::from("x-cool"), String::from("indeed"));
     cool_header.insert(String::from("x-cooler"), String::from("cold"));
@@ -25,7 +24,7 @@ fn main() {
 
     let mut env_vars = ::std::env::vars();
     let api_key = env_vars.find(|v| v.0 == "SG_API_KEY").unwrap();
-    let sender = Sender::new(api_key.1);
-    let code = sender.send(&m);
+    let sender = Sender::new(api_key.1, reqwest::Client::new());
+    let code = sender.send(&m).await;
     println!("{:?}", code);
 }

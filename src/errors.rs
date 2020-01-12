@@ -11,8 +11,8 @@ pub enum SendgridError {
     Io(io::Error),
     JSONDecode(serde_json::Error),
     HttpError(http::Error),
-    HyperError(hyper::Error),
-    InvalidHeader(hyper::header::InvalidHeaderValue),
+    ReqwestError(reqwest::Error),
+    InvalidHeader(http::header::InvalidHeaderValue),
     InvalidFilename,
     UTF8Decode(std::string::FromUtf8Error),
 }
@@ -31,14 +31,14 @@ impl From<http::Error> for SendgridError {
     }
 }
 
-impl From<hyper::Error> for SendgridError {
-    fn from(error: hyper::Error) -> Self {
-        SendgridError::HyperError(error)
+impl From<reqwest::Error> for SendgridError {
+    fn from(error: reqwest::Error) -> Self {
+        Self::ReqwestError(error)
     }
 }
 
-impl From<hyper::header::InvalidHeaderValue> for SendgridError {
-    fn from(error: hyper::header::InvalidHeaderValue) -> Self {
+impl From<http::header::InvalidHeaderValue> for SendgridError {
+    fn from(error: http::header::InvalidHeaderValue) -> Self {
         SendgridError::InvalidHeader(error)
     }
 }

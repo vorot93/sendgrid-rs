@@ -1,8 +1,12 @@
 [package]
-name = "sendgrid-futures3"
-version = "0.1.0"
-authors = ["Jasper Bryant-Greene <jbg@rf.net.nz>"]
-description = "An unofficial client library for the SendGrid API (futures3 version)"
+name = "sendgrid"
+version = "0.9.0"
+authors = [
+    "Garrett Squire <garrettsquire@gmail.com>",
+    "Jasper Bryant-Greene <jbg@rf.net.nz>",
+    "Artem Vorotnikov <artem@vorotnikov.me>",
+]
+description = "An unofficial client library for the SendGrid API"
 repository = "https://github.com/jbg/sendgrid-rs"
 license = "MIT"
 homepage = "https://sendgrid.com"
@@ -12,11 +16,12 @@ edition = "2018"
 
 [dependencies]
 data-encoding = "2.1"
-failure = { version = "0.1.5", default-features = false, features = ["derive"] }
-futures = "0.3.1"
-http = "0.2.0"
-hyper = "0.13.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = "0.2.4"
-url = "2.1.0"
+failure = { version = "0.1", default-features = false, features = ["derive"] }
+http = "0.2"
+reqwest = { version = "0.10", features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+url = "2"
+
+[dev-dependencies]
+tokio = { version = "0.2", features = ["full"] }
